@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     page.drawText("Valores sujeitos à confirmação comercial e à tabela vigente da COLAE.", { x:48, y:70, size:9, font, color:rgb(0.45,0.47,0.52) });
 
     const bytes = await pdf.save();
-    return new NextResponse(bytes, { headers: { "Content-Type":"application/pdf", "Content-Disposition":"inline; filename=\"colae-orcamento.pdf\"" } });
+    return new NextResponse(bytes as unknown as BodyInit, { headers: { "Content-Type":"application/pdf", "Content-Disposition":"inline; filename=\"colae-orcamento.pdf\"" } });
   } catch {
     return NextResponse.json({ error: "Não foi possível gerar o PDF." }, { status: 400 });
   }
