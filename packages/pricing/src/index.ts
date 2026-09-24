@@ -61,7 +61,7 @@ export function calculateQuote(input: QuoteInput): Quote {
 
   // Custo operacional simplificado do MVP. A tabela real da COLAE deve substituir este fator.
   const productionCost = input.quantity * Math.max(0.025, areaM2 * 35);
-  const tier = quantityTiers.find((item) => input.quantity >= item.min) ?? quantityTiers.at(-1)!;
+  const tier = quantityTiers.find((item) => input.quantity >= item.min) ?? quantityTiers[quantityTiers.length - 1];
   const production = (materialCost + finishingCost + productionCost) * tier.factor;
 
   const setup = product.setup;
