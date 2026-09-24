@@ -1,0 +1,5 @@
+{
+  "framework": "nextjs",
+  "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
+  "buildCommand": "pnpm --filter @colae/web build"
+}

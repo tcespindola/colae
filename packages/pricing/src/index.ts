@@ -1,15 +1,94 @@
-export type QuoteInput={product:string;material:string;width:number;height:number;quantity:number;finish:string};
-export type Quote={subtotal:number;setup:number;total:number;unitPrice:number};
-const materialRate:Record<string,number>={"bopp-white":0.018,"paper-kraft":0.014,"paper-white":0.012};
-const finishRate:Record<string,number>={none:0,matte:0.006,gloss:0.007};
-export function calculateQuote(input:QuoteInput):Quote{
- if(!Number.isFinite(input.width)||!Number.isFinite(input.height)||input.width<=0||input.height<=0)throw new Error("Dimensões inválidas.");
- if(!Number.isInteger(input.quantity)||input.quantity<100||input.quantity>1000000)throw new Error("Quantidade deve estar entre 100 e 1.000.000.");
- const material=materialRate[input.material]; if(!material)throw new Error("Material inválido.");
- const finish=finishRate[input.finish]; if(finish===undefined)throw new Error("Acabamento inválido.");
- const areaCm2=(input.width*input.height)/100; const productFactor=input.product==="sticker"?1.12:1;
- const unit=Math.max(0.08,(areaCm2*(material+finish))*productFactor);
- const volumeDiscount=input.quantity>=5000?0.88:input.quantity>=2500?0.93:input.quantity>=1000?0.97:1;
- const subtotal=input.quantity*unit*volumeDiscount; const setup=input.product==="sticker"?35:25; const total=Number((subtotal+setup).toFixed(2));
- return{subtotal:Number(subtotal.toFixed(2)),setup,total,unitPrice:Number((total/input.quantity).toFixed(2))};
+import { dies, finishes, materials, products, quantityTiers } from "./catalog";
+
+export type QuoteInput = {
+  productId: string;
+  materialId: string;
+  widthMm: number;
+  heightMm: number;
+  quantity: number;
+  finishIds: string[];
+  dieId?: string | null;
+};
+
+export type Quote = {
+  currency: "BRL";
+  breakdown: {
+    material: number;
+    finishing: number;
+    die: number;
+    production: number;
+    setup: number;
+    margin: number;
+    subtotal: number;
+    total: number;
+    unitPrice: number;
+  };
+  assumptions: string[];
+};
+
+const DEFAULT_MARGIN = 0.35;
+const BLEED_MM = 2;
+
+function round(value: number) {
+  return Number(value.toFixed(2));
 }
+
+export function calculateQuote(input: QuoteInput): Quote {
+  if (!Number.isFinite(input.widthMm) || !Number.isFinite(input.heightMm) || input.widthMm <= 0 || input.heightMm <= 0) {
+    throw new Error("Dimensões inválidas.");
+  }
+  if (!Number.isInteger(input.quantity) || input.quantity < 100 || input.quantity > 1000000) {
+    throw new Error("Quantidade deve estar entre 100 e 1.000.000.");
+  }
+
+  const product = products.find((item) => item.id === input.productId);
+  const material = materials.find((item) => item.id === input.materialId);
+  const selectedFinishes = input.finishIds.map((id) => finishes.find((item) => item.id === id));
+  const die = dies.find((item) => item.id === (input.dieId ?? "standard"));
+
+  if (!product) throw new Error("Produto inválido.");
+  if (!material) throw new Error("Material inválido.");
+  if (selectedFinishes.some((item) => !item)) throw new Error("Acabamento inválido.");
+  if (!die) throw new Error("Faca inválida.");
+
+  // Área com sangria: 2 mm adicionais em cada lado.
+  const widthM = (input.widthMm + BLEED_MM * 2) / 1000;
+  const heightM = (input.heightMm + BLEED_MM * 2) / 1000;
+  const areaM2 = widthM * heightM;
+
+  const materialCost = input.quantity * areaM2 * material.pricePerM2;
+  const finishingCost = input.quantity * areaM2 * selectedFinishes.reduce((sum, item) => sum + (item?.pricePerM2 ?? 0), 0);
+
+  // Custo operacional simplificado do MVP. A tabela real da COLAE deve substituir este fator.
+  const productionCost = input.quantity * Math.max(0.025, areaM2 * 35);
+  const tier = quantityTiers.find((item) => input.quantity >= item.min) ?? quantityTiers.at(-1)!;
+  const production = (materialCost + finishingCost + productionCost) * tier.factor;
+
+  const setup = product.setup;
+  const dieCost = die.price;
+  const subtotal = production + setup + dieCost;
+  const margin = subtotal * DEFAULT_MARGIN;
+  const total = round(subtotal + margin);
+
+  return {
+    currency: "BRL",
+    breakdown: {
+      material: round(materialCost * tier.factor),
+      finishing: round(finishingCost * tier.factor),
+      die: round(dieCost),
+      production: round(productionCost * tier.factor),
+      setup: round(setup),
+      margin: round(margin),
+      subtotal: round(subtotal),
+      total,
+      unitPrice: round(total / input.quantity)
+    },
+    assumptions: [
+      "Valores de catálogo são parâmetros de demonstração do MVP e devem ser substituídos pelos custos reais da COLAE.",
+      "Sangria considerada: 2 mm por lado.",
+      "Margem padrão do MVP: 35%."
+    ]
+  };
+}
+
+export { products, materials, finishes, dies, quantityTiers };
