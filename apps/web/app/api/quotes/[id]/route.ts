@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getQuote, getQuoteForPublic, updateQuoteStatus, type QuoteStatus } from "@colae/db";
-import { isAdmin } from "@/lib/admin-auth";
+import { isAdmin } from "../../../lib/admin-auth";
 
 function publicQuote(quote: Awaited<ReturnType<typeof getQuote>>) {
   if (!quote) return null;
