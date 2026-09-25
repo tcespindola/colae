@@ -1,10 +1,4 @@
-import { NextResponse } from "next/server";
-import { getQuote, databaseConfigured } from "@colae/db";
-
-export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
-  if (!databaseConfigured()) return NextResponse.json({ error: "Banco de dados ainda não configurado." }, { status: 503 });
-  const quote = await getQuote(id);
-  if (!quote) return NextResponse.json({ error: "Orçamento não encontrado." }, { status: 404 });
-  return NextResponse.json(quote);
-}
+import { NextRequest,NextResponse } from "next/server";
+import { getQuote,updateQuoteStatus,type QuoteStatus } from "@colae/db";
+export async function GET(_:NextRequest,{params}:{params:Promise<{id:string}>}){const {id}=await params;const quote=await getQuote(id);if(!quote)return NextResponse.json({error:"Orçamento não encontrado."},{status:404});return NextResponse.json(quote);}
+export async function PATCH(request:Request,{params}:{params:Promise<{id:string}>}){const {id}=await params;const body=await request.json().catch(()=>({}));const allowed:["draft","sent","approved","rejected","expired"]=["draft","sent","approved","rejected","expired"];if(!allowed.includes(body.status))return NextResponse.json({error:"Status inválido."},{status:400});const ok=await updateQuoteStatus(id,body.status as QuoteStatus);return ok?NextResponse.json({ok:true,status:body.status}):NextResponse.json({error:"Orçamento não encontrado."},{status:404});}
