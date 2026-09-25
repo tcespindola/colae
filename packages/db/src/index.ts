@@ -1,18 +1,10 @@
 import postgres from "postgres";
 import { randomUUID } from "node:crypto";
-export type QuoteStatus = "draft" | "sent" | "approved" | "rejected" | "expired";
-export type StoredQuote = { id:string; customerId:string|null; publicToken:string|null; status:QuoteStatus; input:Record<string,unknown>; quote:Record<string,unknown>; createdAt:string; updatedAt:string };
-export type Customer = { id:string; name:string; email:string|null; phone:string|null; company:string|null; createdAt:string };
+export type QuoteStatus="draft"|"sent"|"approved"|"rejected"|"expired";
+export type StoredQuote={id:string;customerId:string|null;publicToken:string|null;status:QuoteStatus;input:Record<string,unknown>;quote:Record<string,unknown>;createdAt:string;updatedAt:string};
+export type Customer={id:string;name:string;email:string|null;phone:string|null;company:string|null;createdAt:string};
 function client(){const url=process.env.DATABASE_URL;return url?postgres(url,{max:5,idle_timeout:20,connect_timeout:5}):null;}
-export async function saveQuote(id:string,input:Record<string,unknown>,quote:Record<string,unknown>,customer?:Partial<Customer>){
- const sql=client();if(!sql)return {persisted:false,publicToken:null};
- try{let customerId:string|null=null;
-  if(customer?.name){customerId=customer.id??randomUUID();await sql`insert into customers (id,name,email,phone,company) values (${customerId},${customer.name},${customer.email??null},${customer.phone??null},${customer.company??null}) on conflict (id) do update set name=excluded.name,email=excluded.email,phone=excluded.phone,company=excluded.company`;}
-  const publicToken=randomUUID()+randomUUID();
-  await sql`insert into quotes (id,customer_id,status,public_token,input,quote) values (${id},${customerId},"draft",${publicToken},${sql.json(JSON.stringify(input))},${sql.json(JSON.stringify(quote))})`;
-  return {persisted:true,publicToken};
- }finally{await sql.end();}
-}
+export async function saveQuote(id:string,input:Record<string,unknown>,quote:Record<string,unknown>,customer?:Partial<Customer>){const sql=client();if(!sql)return {persisted:false,publicToken:null};try{let customerId:string|null=null;if(customer?.name){customerId=customer.id??randomUUID();await sql`insert into customers (id,name,email,phone,company) values (${customerId},${customer.name},${customer.email??null},${customer.phone??null},${customer.company??null}) on conflict (id) do update set name=excluded.name,email=excluded.email,phone=excluded.phone,company=excluded.company`;}const publicToken=randomUUID()+randomUUID();await sql`insert into quotes (id,customer_id,status,public_token,input,quote) values (${id},${customerId},"draft",${publicToken},${sql.json(JSON.stringify(input))},${sql.json(JSON.stringify(quote))})`;return {persisted:true,publicToken};}finally{await sql.end();}}
 export async function getQuote(id:string):Promise<StoredQuote|null>{const sql=client();if(!sql)return null;try{const rows=await sql`select id,customer_id as "customerId",public_token as "publicToken",status,input,quote,created_at as "createdAt",updated_at as "updatedAt" from quotes where id=${id} limit 1`;return rows[0]?(rows[0] as unknown as StoredQuote):null;}finally{await sql.end();}}
 export async function getQuoteForPublic(id:string,token:string):Promise<StoredQuote|null>{const sql=client();if(!sql)return null;try{const rows=await sql`select id,customer_id as "customerId",public_token as "publicToken",status,input,quote,created_at as "createdAt",updated_at as "updatedAt" from quotes where id=${id} and public_token=${token} limit 1`;return rows[0]?(rows[0] as unknown as StoredQuote):null;}finally{await sql.end();}}
 export async function listQuotes(limit=50):Promise<StoredQuote[]>{const sql=client();if(!sql)return [];try{const rows=await sql`select id,customer_id as "customerId",public_token as "publicToken",status,input,quote,created_at as "createdAt",updated_at as "updatedAt" from quotes order by created_at desc limit ${Math.min(Math.max(limit,1),100)}`;return rows as unknown as StoredQuote[];}finally{await sql.end();}}
