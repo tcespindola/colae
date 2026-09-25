@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveQuote, listQuotes, databaseConfigured } from "@colae/db";
 import { randomUUID } from "node:crypto";
-import { isAdmin } from "@/lib/admin-auth";
+import { isAdmin } from "../../../lib/admin-auth";
 
 export async function POST(request: Request) {
   try {
