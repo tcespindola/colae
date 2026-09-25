@@ -2,7 +2,7 @@
 import { useEffect,useState } from "react";
 type Item={id:string;name:string;value:number;active:boolean}; type Tier={id:string;minQuantity:number;factor:number;active:boolean}; type QuoteRow={id:string;status:string;createdAt:string;publicToken:string|null};
 type Catalog={products:Item[];materials:Item[];finishes:Item[];dies:Item[];quantityTiers:Tier[]};
-const empty={products:[],materials:[],finishes:[],dies:[],quantityTiers:[]};
+const empty:Catalog={products:[],materials:[],finishes:[],dies:[],quantityTiers:[]};
 const money=(v:number)=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 export default function AdminPage(){
  const[catalog,setCatalog]=useState<Catalog>(empty),[quotes,setQuotes]=useState<QuoteRow[]>([]),[loading,setLoading]=useState(true),[auth,setAuth]=useState(false),[key,setKey]=useState(""),[error,setError]=useState(""),[saved,setSaved]=useState(false);
