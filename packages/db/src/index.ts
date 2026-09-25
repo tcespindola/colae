@@ -16,7 +16,7 @@ export async function saveQuote(id: string, input: Record<string, unknown>, quot
   const sql = client();
   if (!sql) return false;
   try {
-    await sql`insert into quotes (id, input, quote) values (${id}, ${sql.json(input)}, ${sql.json(quote)})`;
+    await sql`insert into quotes (id, input, quote) values (${id}, ${sql.json(JSON.stringify(input))}, ${sql.json(JSON.stringify(quote))})`;
     return true;
   } finally {
     await sql.end();
