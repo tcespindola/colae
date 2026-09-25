@@ -13,3 +13,32 @@ create unique index if not exists quotes_public_token_idx on quotes (public_toke
 create index if not exists quotes_created_at_idx on quotes (created_at desc);
 create index if not exists quotes_status_idx on quotes (status);
 create index if not exists quotes_customer_idx on quotes (customer_id);
+
+insert into products (id,name,setup) values
+('label','Etiqueta adesiva',25),
+('sticker','Sticker personalizado',20),
+('tag','Tag adesiva',30)
+on conflict (id) do nothing;
+insert into materials (id,name,price_per_m2) values
+('bopp-branco','BOPP branco',48),
+('bopp-transparente','BOPP transparente',62),
+('papel-couche','Papel couchê',32),
+('kraft','Kraft adesivo',42)
+on conflict (id) do nothing;
+insert into finishes (id,name,price_per_m2) values
+('sem-acabamento','Sem acabamento',0),
+('laminacao-brilho','Laminação brilho',18),
+('laminacao-fosca','Laminação fosca',22),
+('hot-stamping','Hot stamping',45)
+on conflict (id) do nothing;
+insert into dies (id,name,price) values
+('standard','Faca padrão',0),
+('especial','Faca especial',35)
+on conflict (id) do nothing;
+insert into quantity_tiers (id,min_quantity,factor) values
+('q1',1,1.25),
+('q2',100,1.00),
+('q3',500,0.88),
+('q4',1000,0.78),
+('q5',5000,0.68)
+on conflict (id) do nothing;
