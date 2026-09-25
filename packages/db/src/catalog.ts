@@ -10,6 +10,9 @@ export type CatalogSnapshot = {
   quantityTiers: Array<{ id: string; minQuantity: number; factor: number; active: boolean }>;
 };
 
+const normalizeItems = (rows: any[]): CatalogItem[] =>
+  rows.map((row) => ({ id: row.id, name: row.name, value: Number(row.value), active: Boolean(row.active) }));
+
 export async function getCatalog(): Promise<CatalogSnapshot> {
   if (!databaseConfigured()) return { products: [], materials: [], finishes: [], dies: [], quantityTiers: [] };
   const url = process.env.DATABASE_URL;
@@ -24,11 +27,16 @@ export async function getCatalog(): Promise<CatalogSnapshot> {
       sql`select id, min_quantity as "minQuantity", factor, active from quantity_tiers order by min_quantity desc`
     ]);
     return {
-      products: products as unknown as CatalogItem[],
-      materials: materials as unknown as CatalogItem[],
-      finishes: finishes as unknown as CatalogItem[],
-      dies: dies as unknown as CatalogItem[],
-      quantityTiers: quantityTiers as unknown as CatalogSnapshot["quantityTiers"]
+      products: normalizeItems(products),
+      materials: normalizeItems(materials),
+      finishes: normalizeItems(finishes),
+      dies: normalizeItems(dies),
+      quantityTiers: quantityTiers.map((row: any) => ({
+        id: row.id,
+        minQuantity: Number(row.minQuantity),
+        factor: Number(row.factor),
+        active: Boolean(row.active)
+      }))
     };
   } finally { await sql.end(); }
 }
