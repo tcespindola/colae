@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCatalog, updateCatalog, type CatalogSnapshot } from "@colae/db/catalog";
-import { isAdmin } from "@/lib/admin-auth";
+import { isAdmin } from "../../../../lib/admin-auth";
 
 export async function GET(r: NextRequest) {
   if (!process.env.DATABASE_URL) return NextResponse.json({
