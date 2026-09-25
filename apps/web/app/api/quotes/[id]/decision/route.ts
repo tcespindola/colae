@@ -1,0 +1,3 @@
+import {NextResponse} from "next/server";
+import {updatePublicQuoteStatus} from "@colae/db";
+export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){const {id}=await params;const body=await request.json().catch(()=>({}));if(!body.token||!["approved","rejected"].includes(body.status))return NextResponse.json({error:"Decisão inválida."},{status:400});const ok=await updatePublicQuoteStatus(id,String(body.token),body.status);return ok?NextResponse.json({ok:true,status:body.status}):NextResponse.json({error:"Orçamento inválido, expirado ou já decidido."},{status:409});}
