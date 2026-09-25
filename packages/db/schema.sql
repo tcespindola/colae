@@ -19,22 +19,19 @@ create table if not exists quantity_tiers (
   active boolean not null default true, created_at timestamptz not null default now()
 );
 create table if not exists customers (
-  id text primary key,
-  name text not null,
-  email text,
-  phone text,
-  company text,
+  id text primary key, name text not null, email text, phone text, company text,
   created_at timestamptz not null default now()
 );
 create table if not exists quotes (
-  id text primary key,
-  customer_id text references customers(id) on delete set null,
-  status text not null default 'draft',
-  input jsonb not null,
-  quote jsonb not null,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  id text primary key, customer_id text references customers(id) on delete set null,
+  status text not null default 'draft', public_token text, input jsonb not null, quote jsonb not null,
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
+alter table quotes add column if not exists customer_id text references customers(id) on delete set null;
+alter table quotes add column if not exists status text not null default 'draft';
+alter table quotes add column if not exists public_token text;
+alter table quotes add column if not exists updated_at timestamptz not null default now();
+create unique index if not exists quotes_public_token_idx on quotes (public_token) where public_token is not null;
 create index if not exists quotes_created_at_idx on quotes (created_at desc);
 create index if not exists quotes_status_idx on quotes (status);
 create index if not exists quotes_customer_idx on quotes (customer_id);
